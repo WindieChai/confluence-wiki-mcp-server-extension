@@ -1,0 +1,52 @@
+{
+  "name": "confluence-wiki-mcp-server-extension",
+  "version": "1.0.0",
+  "description": "A VSCode/Cursor extension providing an MCP Server for Confluence Wiki integration",
+  "main": "./dist/extension/extension.js",
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package",
+    "publish": "vsce publish",
+    "test": "node ./dist/test/runTest.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.4.0",
+    "confluence.js": "^1.7.4",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^2.24.0",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "configuration": {
+      "title": "Confluence Wiki MCP Server",
+      "properties": {
+        "confluence-wiki-mcp-server-extension.host": {
+          "type": "string",
+          "default": "",
+          "description": "Confluence Wiki Host"
+        },
+        "confluence-wiki-mcp-server-extension.username": {
+          "type": "string",
+          "default": "",
+          "description": "Confluence Username"
+        },
+        "confluence-wiki-mcp-server-extension.password": {
+          "type": "string",
+          "default": "",
+          "description": "Confluence Password"
+        }
+      }
+    }
+  }
+}

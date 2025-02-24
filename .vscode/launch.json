@@ -1,0 +1,28 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Extension",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}"
+      ],
+      "outFiles": [
+        "${workspaceFolder}/dist/**/*.js"
+      ],
+      "preLaunchTask": "npm: watch"
+    },
+    {
+      "name": "MCP Server",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/dist/mcp-server/index.js",
+      "outFiles": [
+        "${workspaceFolder}/dist/**/*.js"
+      ],
+      "sourceMaps": true,
+      "preLaunchTask": "npm: compile"
+    }
+  ]
+} 
