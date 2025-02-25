@@ -4,7 +4,7 @@ import { configManager } from './config-manager';
 import { ConfigView } from './config-view';
 
 export function activate(context: vscode.ExtensionContext) {    
-    configManager.initialize(vscode.workspace);
+    configManager.initialize();
     
     // 注册打开配置界面的命令
     let disposable = vscode.commands.registerCommand('confluence-wiki-mcp-server-extension.openConfig', () => {

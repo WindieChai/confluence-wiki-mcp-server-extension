@@ -28,8 +28,8 @@
   },
   "main": "./dist/extension/extension.js",
   "scripts": {
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
+    "compile": "tsc -p ./ && copyfiles -f extension/config.enc dist/",
+    "watch": "tsc -watch -p ./ && copyfiles -f extension/config.enc dist/",
     "package": "vsce package",
     "publish": "vsce publish",
     "test": "node ./dist/test/runTest.js"
@@ -45,6 +45,7 @@
     "@types/turndown": "^5.0.5",
     "@types/vscode": "^1.85.0",
     "@vscode/vsce": "^2.24.0",
+    "copyfiles": "^2.4.1",
     "typescript": "^5.3.3"
   },
   "engines": {
@@ -54,26 +55,6 @@
     "onStartupFinished"
   ],
   "contributes": {
-    "configuration": {
-      "title": "Confluence Wiki MCP Server",
-      "properties": {
-        "confluence-wiki-mcp-server-extension.host": {
-          "type": "string",
-          "default": "",
-          "description": "Confluence Wiki Host"
-        },
-        "confluence-wiki-mcp-server-extension.username": {
-          "type": "string",
-          "default": "",
-          "description": "Confluence Username"
-        },
-        "confluence-wiki-mcp-server-extension.password": {
-          "type": "string",
-          "default": "",
-          "description": "Confluence Password"
-        }
-      }
-    },
     "viewsContainers": {
       "activitybar": [
         {

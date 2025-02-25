@@ -5,7 +5,7 @@ A VSCode/Cursor extension providing an MCP Server for Confluence Wiki integratio
 ## Features
 
 - Integrate with Confluence Wiki through MCP Server
-- Easy configuration interface
+- Easy configuration interface with secure credential storage
 - Convert Wiki content to Markdown format
 
 ## How to Use
@@ -18,6 +18,7 @@ A VSCode/Cursor extension providing an MCP Server for Confluence Wiki integratio
      - Username
      - Password
    - Click "Save Configuration" button
+   - Your credentials will be securely stored in an encrypted file
 
 2. **Set up MCP Server in Cursor**
    - Open Cursor's Settings
@@ -30,4 +31,4 @@ A VSCode/Cursor extension providing an MCP Server for Confluence Wiki integratio
 
 After completing these steps, your Cursor will be able to fetch content from your Confluence Wiki through the MCP Server.
 
-**Note**: Make sure your Confluence Wiki credentials are correct and you have proper access permissions to the Wiki pages.
+**Note**: Your credentials are stored securely in an encrypted file and are never exposed in VSCode settings.

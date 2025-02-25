@@ -43,7 +43,6 @@ class ConfigManager {
     private static instance: ConfigManager;
     private config: ConfluenceConfig;
     private configPath: string;
-    private vscodeConfig?: VSCodeConfig;
 
     private constructor() {
         this.config = {
@@ -52,31 +51,19 @@ class ConfigManager {
             password: ''
         };
         this.configPath = path.join(__dirname, '..', 'config.enc');
+        this.loadConfigFile(); // 初始化时直接从文件加载
     }
 
-    public initialize(vscodeConfig: VSCodeConfig): void {
-        this.vscodeConfig = vscodeConfig;
-        this.loadConfig();
-        
-        this.vscodeConfig.onDidChangeConfiguration(e => {
-            if (e.affectsConfiguration(EXTENSION_NAME)) {
-                this.loadConfig();
+    private loadConfigFile(): void {
+        try {
+            if (fs.existsSync(this.configPath)) {
+                const encryptedConfig = fs.readFileSync(this.configPath, 'utf8');
+                const decryptedConfig = decrypt(encryptedConfig);
+                this.config = JSON.parse(decryptedConfig);
             }
-        });
-    }
-
-    private loadConfig(): void {
-        if (!this.vscodeConfig) return;
-
-        const config = this.vscodeConfig.getConfiguration(EXTENSION_NAME);
-        const newConfig = {
-            host: config.get('host') as string,
-            username: config.get('username') as string,
-            password: config.get('password') as string
-        };
-        
-        this.config = newConfig;
-        this.writeConfigFile();
+        } catch (error) {
+            console.error('Error reading config file:', error);
+        }
     }
 
     private writeConfigFile(): void {
@@ -88,11 +75,9 @@ class ConfigManager {
         }
     }
 
-    public static getInstance(): ConfigManager {
-        if (!ConfigManager.instance) {
-            ConfigManager.instance = new ConfigManager();
-        }
-        return ConfigManager.instance;
+    public initialize(): void {
+        // 不再需要 vscodeConfig 参数
+        this.loadConfigFile();
     }
 
     public getConfig(): ConfluenceConfig {
@@ -100,22 +85,18 @@ class ConfigManager {
     }
 
     public async setConfig(newConfig: Partial<ConfluenceConfig>): Promise<void> {
-        // 更新内存中的配置
         this.config = {
             ...this.config,
             ...newConfig
         };
-
-        // 保存到 VSCode 配置
-        if (this.vscodeConfig) {
-            const config = this.vscodeConfig.getConfiguration(EXTENSION_NAME);
-            await config.update('host', newConfig.host, true);
-            await config.update('username', newConfig.username, true);
-            await config.update('password', newConfig.password, true);
-        }
-
-        // 写入加密文件
         this.writeConfigFile();
+    }
+
+    public static getInstance(): ConfigManager {
+        if (!ConfigManager.instance) {
+            ConfigManager.instance = new ConfigManager();
+        }
+        return ConfigManager.instance;
     }
 }
 
