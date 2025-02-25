@@ -98,6 +98,25 @@ class ConfigManager {
     public getConfig(): ConfluenceConfig {
         return { ...this.config };
     }
+
+    public async setConfig(newConfig: Partial<ConfluenceConfig>): Promise<void> {
+        // 更新内存中的配置
+        this.config = {
+            ...this.config,
+            ...newConfig
+        };
+
+        // 保存到 VSCode 配置
+        if (this.vscodeConfig) {
+            const config = this.vscodeConfig.getConfiguration(EXTENSION_NAME);
+            await config.update('host', newConfig.host, true);
+            await config.update('username', newConfig.username, true);
+            await config.update('password', newConfig.password, true);
+        }
+
+        // 写入加密文件
+        this.writeConfigFile();
+    }
 }
 
 export const configManager = ConfigManager.getInstance();

@@ -109,7 +109,7 @@ loadConfigAndInitialize();
 // 创建server实例
 const server = new McpServer({
     name: "wiki",
-    version: "1.0.0",
+    version: "1.0.0"
 });
 
 // 注册get-page工具
