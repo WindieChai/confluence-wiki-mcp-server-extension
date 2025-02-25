@@ -16,6 +16,7 @@ function loadConfigAndInitialize() {
         const config = JSON.parse(configStr) as ConfluenceConfig;
         confluence = new ConfluenceClient({
             host: config.host,
+            apiPrefix: '/rest',
             authentication: {
                 basic: {
                     username: config.username,
