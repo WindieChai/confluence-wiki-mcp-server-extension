@@ -5,9 +5,34 @@ import { ConfluenceClient } from "confluence.js";
 import * as fs from 'fs';
 import * as path from 'path';
 import { decrypt, ConfluenceConfig } from "../extension/config-manager";
+import TurndownService from 'turndown';
 
 let confluence: ConfluenceClient;
 const configPath = path.join(__dirname, '..', 'config.enc');
+
+// 创建 turndown 实例，配置转换选项
+const turndownService = new TurndownService({
+    headingStyle: 'atx',      // # 风格的标题
+    hr: '---',                // 水平线
+    bulletListMarker: '-',    // 无序列表使用 -
+    codeBlockStyle: 'fenced', // 使用 ``` 风格的代码块
+    emDelimiter: '_'          // 使用 _ 作为斜体标记
+});
+
+// 配置额外的转换规则
+turndownService.addRule('confluenceMetadata', {
+    filter: ['div', 'span'],
+    replacement: function(content, node) {
+        // 移除一些 Confluence 特有的元数据 div
+        if (node.classList && (
+            node.classList.contains('confluence-metadata') ||
+            node.classList.contains('confluence-information-macro')
+        )) {
+            return '';
+        }
+        return content;
+    }
+});
 
 function loadConfigAndInitialize() {
     try {
@@ -51,10 +76,13 @@ async function getWikiContent({ url }: { url: string }) {
             };
         }
 
+        // 将HTML转换为Markdown
+        const markdown = turndownService.turndown(response.body.view.value);
+
         return {
             content: [{
                 type: "text" as const,
-                text: response.body.view.value
+                text: markdown
             }],
         };
     } catch (error) {
