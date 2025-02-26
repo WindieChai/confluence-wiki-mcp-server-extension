@@ -2,7 +2,7 @@
   "name": "confluence-wiki-mcp-server-extension",
   "displayName": "Confluence Wiki MCP Server",
   "version": "1.0.0",
-  "publisher": "Windie Chai",
+  "publisher": "WindStyle",
   "description": "A VSCode/Cursor extension providing an MCP Server for Confluence Wiki integration",
   "author": {
     "name": "Windie Chai"
@@ -23,7 +23,7 @@
   },
   "icon": "resources/icon.png",
   "galleryBanner": {
-    "color": "#C80000",
+    "color": "#001f3f",
     "theme": "dark"
   },
   "main": "./dist/extension/extension.js",
