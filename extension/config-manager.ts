@@ -24,6 +24,10 @@ class ConfigManager extends EventEmitter {
             username: '',
             password: ''
         };
+
+        EncryptionManager.ensureConfigExists();
+        this.loadConfigFile();
+        this.startWatchingConfig();
     }
 
     private loadConfigFile(): void {
@@ -70,15 +74,6 @@ class ConfigManager extends EventEmitter {
             console.error('Error setting up file watcher:', error);
             // 出错时延迟重试
             setTimeout(() => this.startWatchingConfig(), 5000);
-        }
-    }
-
-    public initialize(): void {
-        if (!this.initialized) {
-            EncryptionManager.ensureConfigExists();
-            this.loadConfigFile();
-            this.startWatchingConfig();
-            this.initialized = true;
         }
     }
 

@@ -9,7 +9,7 @@
   },
   "license": "MIT",
   "categories": [
-    "Other"
+    "AI"
   ],
   "keywords": [
     "confluence",
@@ -91,5 +91,11 @@
         }
       ]
     }
-  }
+  },
+  "files": [
+    "dist/**/*.js",
+    "dist/empty-config.enc",
+    "resources/**",
+    "README.md"
+  ]
 }
