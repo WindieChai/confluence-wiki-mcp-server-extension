@@ -28,8 +28,8 @@
   },
   "main": "./dist/extension/extension.js",
   "scripts": {
-    "compile": "tsc -p ./ && copyfiles -f extension/config.enc dist/",
-    "watch": "tsc -watch -p ./ && copyfiles -f extension/config.enc dist/",
+    "compile": "tsc -p ./ && copyfiles -f extension/empty-config.enc dist/",
+    "watch": "tsc -watch -p ./ && copyfiles -f extension/empty-config.enc dist/",
     "package": "vsce package",
     "publish": "vsce publish",
     "test": "node ./dist/test/runTest.js"

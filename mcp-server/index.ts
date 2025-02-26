@@ -9,6 +9,7 @@ import TurndownService from 'turndown';
 
 let confluence: ConfluenceClient;
 const configPath = path.join(__dirname, '..', 'config.enc');
+const emptyConfigPath = path.join(__dirname, '..', 'empty-config.enc');
 
 // 创建 turndown 实例，配置转换选项
 const turndownService = new TurndownService({
@@ -54,6 +55,39 @@ function loadConfigAndInitialize() {
     }
 }
 
+// 检查配置文件是否存在，如果不存在则创建
+function ensureConfigExists() {
+    try {
+        if (!fs.existsSync(configPath)) {
+            console.log('Config file does not exist, creating from empty template');
+            
+            // 检查空配置模板是否存在
+            if (fs.existsSync(emptyConfigPath)) {
+                // 复制空配置模板到配置文件位置
+                fs.copyFileSync(emptyConfigPath, configPath);
+                console.log('Created config file from empty template');
+            } else {
+                console.error('Empty config template not found at:', emptyConfigPath);
+            }
+        }
+    } catch (error) {
+        console.error('Error ensuring config file exists:', error);
+    }
+}
+
+// 确保配置文件存在
+ensureConfigExists();
+
+// 初始化时读取配置
+loadConfigAndInitialize();
+
+// 监听配置文件变更
+fs.watch(configPath, (eventType) => {
+    if (eventType === 'change') {
+        loadConfigAndInitialize();
+    }
+});
+
 async function getWikiContent({ url }: { url: string }) {
     try {
         const urlParams = new URL(url).searchParams;
@@ -95,16 +129,6 @@ async function getWikiContent({ url }: { url: string }) {
         };
     }
 }
-
-// 监听配置文件变更
-fs.watch(configPath, (eventType) => {
-    if (eventType === 'change') {
-        loadConfigAndInitialize();
-    }
-});
-
-// 初始化时读取配置
-loadConfigAndInitialize();
 
 // 创建server实例
 const server = new McpServer({
