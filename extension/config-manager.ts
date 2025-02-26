@@ -1,6 +1,7 @@
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
+import { EventEmitter } from 'events';
 
 // 接口定义
 export interface ConfluenceConfig {
@@ -39,19 +40,43 @@ export function decrypt(text: string): string {
 }
 
 // 配置管理器类
-class ConfigManager {
+class ConfigManager extends EventEmitter {
     private static instance: ConfigManager;
     private config: ConfluenceConfig;
     private configPath: string;
+    private emptyConfigPath: string;
+    private watcher: fs.FSWatcher | null = null;
 
     private constructor() {
+        super();
         this.config = {
             host: '',
             username: '',
             password: ''
         };
         this.configPath = path.join(__dirname, '..', 'config.enc');
-        this.loadConfigFile(); // 初始化时直接从文件加载
+        this.emptyConfigPath = path.join(__dirname, '..', 'empty-config.enc');
+        
+        this.ensureConfigExists();
+        this.loadConfigFile();
+        this.startWatchingConfig();
+    }
+
+    private ensureConfigExists(): void {
+        try {
+            if (!fs.existsSync(this.configPath)) {
+                console.log('Config file does not exist, creating from empty template');
+                
+                if (fs.existsSync(this.emptyConfigPath)) {
+                    fs.copyFileSync(this.emptyConfigPath, this.configPath);
+                    console.log('Created config file from empty template');
+                } else {
+                    console.error('Empty config template not found at:', this.emptyConfigPath);
+                }
+            }
+        } catch (error) {
+            console.error('Error ensuring config file exists:', error);
+        }
     }
 
     private loadConfigFile(): void {
@@ -75,9 +100,45 @@ class ConfigManager {
         }
     }
 
+    private startWatchingConfig(): void {
+        try {
+            // 如果已经在监控，先停止
+            if (this.watcher) {
+                this.watcher.close();
+                this.watcher = null;
+            }
+
+            // 确保配置文件存在
+            this.ensureConfigExists();
+
+            // 开始监控
+            this.watcher = fs.watch(this.configPath, (eventType) => {
+                if (eventType === 'change') {
+                    this.loadConfigFile();
+                    this.emit('configChanged', this.config);
+                }
+            });
+
+            this.watcher.on('error', (error) => {
+                console.error('Watch error:', error);
+                // 出错时关闭当前 watcher
+                if (this.watcher) {
+                    this.watcher.close();
+                    this.watcher = null;
+                }
+                // 延迟重试
+                setTimeout(() => this.startWatchingConfig(), 5000);
+            });
+
+        } catch (error) {
+            console.error('Error setting up file watcher:', error);
+            // 出错时延迟重试
+            setTimeout(() => this.startWatchingConfig(), 5000);
+        }
+    }
+
     public initialize(): void {
-        // 不再需要 vscodeConfig 参数
-        this.loadConfigFile();
+        // 初始化已经在构造函数中完成
     }
 
     public getConfig(): ConfluenceConfig {
@@ -90,6 +151,8 @@ class ConfigManager {
             ...newConfig
         };
         this.writeConfigFile();
+        // 写入配置后触发事件
+        this.emit('configChanged', this.config);
     }
 
     public static getInstance(): ConfigManager {

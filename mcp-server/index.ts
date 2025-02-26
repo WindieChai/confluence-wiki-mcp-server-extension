@@ -2,14 +2,11 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { ConfluenceClient } from "confluence.js";
-import * as fs from 'fs';
 import * as path from 'path';
-import { decrypt, ConfluenceConfig } from "../extension/config-manager";
+import { configManager, ConfluenceConfig } from "../extension/config-manager";
 import TurndownService from 'turndown';
 
 let confluence: ConfluenceClient;
-const configPath = path.join(__dirname, '..', 'config.enc');
-const emptyConfigPath = path.join(__dirname, '..', 'empty-config.enc');
 
 // 创建 turndown 实例，配置转换选项
 const turndownService = new TurndownService({
@@ -35,11 +32,8 @@ turndownService.addRule('confluenceMetadata', {
     }
 });
 
-function loadConfigAndInitialize() {
+function initializeConfluenceClient(config: ConfluenceConfig) {
     try {
-        const encryptedConfig = fs.readFileSync(configPath, 'utf8');
-        const configStr = decrypt(encryptedConfig);
-        const config = JSON.parse(configStr) as ConfluenceConfig;
         confluence = new ConfluenceClient({
             host: config.host,
             apiPrefix: '/rest',
@@ -50,43 +44,20 @@ function loadConfigAndInitialize() {
                 }
             },
         });
+        console.log('Confluence client initialized with host:', config.host);
     } catch (error) {
-        console.error('Error reading config:', error);
+        console.error('Error initializing Confluence client:', error);
     }
 }
 
-// 检查配置文件是否存在，如果不存在则创建
-function ensureConfigExists() {
-    try {
-        if (!fs.existsSync(configPath)) {
-            console.log('Config file does not exist, creating from empty template');
-            
-            // 检查空配置模板是否存在
-            if (fs.existsSync(emptyConfigPath)) {
-                // 复制空配置模板到配置文件位置
-                fs.copyFileSync(emptyConfigPath, configPath);
-                console.log('Created config file from empty template');
-            } else {
-                console.error('Empty config template not found at:', emptyConfigPath);
-            }
-        }
-    } catch (error) {
-        console.error('Error ensuring config file exists:', error);
-    }
-}
-
-// 确保配置文件存在
-ensureConfigExists();
-
-// 初始化时读取配置
-loadConfigAndInitialize();
-
-// 监听配置文件变更
-fs.watch(configPath, (eventType) => {
-    if (eventType === 'change') {
-        loadConfigAndInitialize();
-    }
+// 监听配置变更事件
+configManager.on('configChanged', (config) => {
+    console.log('Config changed, reinitializing Confluence client');
+    initializeConfluenceClient(config);
 });
+
+// 初始化时使用当前配置
+initializeConfluenceClient(configManager.getConfig());
 
 async function getWikiContent({ url }: { url: string }) {
     try {
