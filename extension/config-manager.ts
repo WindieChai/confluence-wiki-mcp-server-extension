@@ -1,7 +1,7 @@
-import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import { EventEmitter } from 'events';
+import { EncryptionManager, CONFIG_PATH } from './encryption-manager';
 
 // 接口定义
 export interface ConfluenceConfig {
@@ -10,42 +10,12 @@ export interface ConfluenceConfig {
     password: string;
 }
 
-export interface VSCodeConfig {
-    getConfiguration(section: string): any;
-    onDidChangeConfiguration(callback: (e: { affectsConfiguration: (section: string) => boolean }) => void): void;
-}
-
-// 常量
-const EXTENSION_NAME = 'confluence-wiki-mcp-server-extension';
-const ENCRYPTION_KEY = 'confluencewikimcpserverextension';
-const IV_LENGTH = 16;
-
-// 静态工具函数
-export function encrypt(text: string): string {
-    const iv = crypto.randomBytes(IV_LENGTH);
-    const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(ENCRYPTION_KEY), iv);
-    let encrypted = cipher.update(text);
-    encrypted = Buffer.concat([encrypted, cipher.final()]);
-    return iv.toString('hex') + ':' + encrypted.toString('hex');
-}
-
-export function decrypt(text: string): string {
-    const [ivHex, encryptedHex] = text.split(':');
-    const iv = Buffer.from(ivHex, 'hex');
-    const encrypted = Buffer.from(encryptedHex, 'hex');
-    const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(ENCRYPTION_KEY), iv);
-    let decrypted = decipher.update(encrypted);
-    decrypted = Buffer.concat([decrypted, decipher.final()]);
-    return decrypted.toString();
-}
-
 // 配置管理器类
 class ConfigManager extends EventEmitter {
     private static instance: ConfigManager;
     private config: ConfluenceConfig;
-    private configPath: string;
-    private emptyConfigPath: string;
     private watcher: fs.FSWatcher | null = null;
+    private initialized: boolean = false;
 
     private constructor() {
         super();
@@ -54,50 +24,16 @@ class ConfigManager extends EventEmitter {
             username: '',
             password: ''
         };
-        this.configPath = path.join(__dirname, '..', 'config.enc');
-        this.emptyConfigPath = path.join(__dirname, '..', 'empty-config.enc');
-        
-        this.ensureConfigExists();
-        this.loadConfigFile();
-        this.startWatchingConfig();
-    }
-
-    private ensureConfigExists(): void {
-        try {
-            if (!fs.existsSync(this.configPath)) {
-                console.log('Config file does not exist, creating from empty template');
-                
-                if (fs.existsSync(this.emptyConfigPath)) {
-                    fs.copyFileSync(this.emptyConfigPath, this.configPath);
-                    console.log('Created config file from empty template');
-                } else {
-                    console.error('Empty config template not found at:', this.emptyConfigPath);
-                }
-            }
-        } catch (error) {
-            console.error('Error ensuring config file exists:', error);
-        }
     }
 
     private loadConfigFile(): void {
-        try {
-            if (fs.existsSync(this.configPath)) {
-                const encryptedConfig = fs.readFileSync(this.configPath, 'utf8');
-                const decryptedConfig = decrypt(encryptedConfig);
-                this.config = JSON.parse(decryptedConfig);
-            }
-        } catch (error) {
-            console.error('Error reading config file:', error);
-        }
-    }
-
-    private writeConfigFile(): void {
-        try {
-            const encryptedConfig = encrypt(JSON.stringify(this.config));
-            fs.writeFileSync(this.configPath, encryptedConfig);
-        } catch (error) {
-            console.error('Error writing config file:', error);
-        }
+        const defaultConfig: ConfluenceConfig = {
+            host: '',
+            username: '',
+            password: ''
+        };
+        
+        this.config = EncryptionManager.readConfigFile<ConfluenceConfig>(defaultConfig);
     }
 
     private startWatchingConfig(): void {
@@ -109,10 +45,10 @@ class ConfigManager extends EventEmitter {
             }
 
             // 确保配置文件存在
-            this.ensureConfigExists();
+            EncryptionManager.ensureConfigExists();
 
             // 开始监控
-            this.watcher = fs.watch(this.configPath, (eventType) => {
+            this.watcher = fs.watch(CONFIG_PATH, (eventType) => {
                 if (eventType === 'change') {
                     this.loadConfigFile();
                     this.emit('configChanged', this.config);
@@ -138,7 +74,12 @@ class ConfigManager extends EventEmitter {
     }
 
     public initialize(): void {
-        // 初始化已经在构造函数中完成
+        if (!this.initialized) {
+            EncryptionManager.ensureConfigExists();
+            this.loadConfigFile();
+            this.startWatchingConfig();
+            this.initialized = true;
+        }
     }
 
     public getConfig(): ConfluenceConfig {
@@ -150,7 +91,7 @@ class ConfigManager extends EventEmitter {
             ...this.config,
             ...newConfig
         };
-        this.writeConfigFile();
+        EncryptionManager.writeConfigFile(this.config);
         // 写入配置后触发事件
         this.emit('configChanged', this.config);
     }
@@ -163,4 +104,5 @@ class ConfigManager extends EventEmitter {
     }
 }
 
+// 导出配置管理器实例
 export const configManager = ConfigManager.getInstance();

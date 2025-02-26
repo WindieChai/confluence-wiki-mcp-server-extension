@@ -2,7 +2,6 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { ConfluenceClient } from "confluence.js";
-import * as path from 'path';
 import { configManager, ConfluenceConfig } from "../extension/config-manager";
 import TurndownService from 'turndown';
 
@@ -95,7 +94,7 @@ async function getWikiContent({ url }: { url: string }) {
         return {
             content: [{
                 type: "text" as const,
-                text: `Error fetching page: ${error instanceof Error ? error.message : "Unknown error"}`
+                text: `Failed to retrieve page content: ${error instanceof Error ? error.message : "Unknown error"}`
             }],
         };
     }
