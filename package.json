@@ -1,7 +1,7 @@
 {
   "name": "confluence-wiki-mcp-server-extension",
   "displayName": "Confluence Wiki MCP Server",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publisher": "WindStyle",
   "description": "A VSCode/Cursor extension providing an MCP Server for Confluence Wiki integration",
   "author": {
@@ -95,6 +95,7 @@
   "files": [
     "dist/**/*.js",
     "dist/empty-config.enc",
+    "node_modules/**",
     "resources/**",
     "README.md"
   ]

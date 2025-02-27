@@ -22,14 +22,14 @@ A VSCode/Cursor extension providing an MCP Server for Confluence Wiki integratio
 
 2. **Set up MCP Server in Cursor**
    - Open Cursor's Settings
-   - Navigate to "Model Context Protocol" section
+   - Navigate to "MCP" section
    - Click "Add new MCP Server"
    - Configure the server with following information:
      - Name: Wiki
      - Type: Command
      - Command: [The path shown in Configuration page]
 
-3. **Using the Wiki MCP Tool in Cursor**
+3. **Using the Wiki MCP Server in Cursor**
    - Open a chat with Claude or another AI model in Cursor
    - Switch to "Edit" or "Agent" mode for best results
    - In your prompt, include the Wiki URL and any specific requirements, for example:
