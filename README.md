@@ -10,7 +10,9 @@ A VSCode/Cursor extension providing an MCP Server for Confluence Wiki integratio
 
 ## How to Use
 
-1. **Configure Confluence Wiki Connection**
+1. **Install Node.js**
+
+2. **Configure Confluence Wiki Connection**
    - Open Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`)
    - Type "Confluence Wiki MCP Server: Configuration" and select it
    - In the configuration page, enter your:
@@ -20,7 +22,7 @@ A VSCode/Cursor extension providing an MCP Server for Confluence Wiki integratio
    - Click "Save Configuration" button
    - Your credentials will be securely stored in an encrypted file
 
-2. **Set up MCP Server in Cursor**
+3. **Set up MCP Server in Cursor**
    - Open Cursor's Settings
    - Navigate to "MCP" section
    - Click "Add new MCP Server"
@@ -29,7 +31,7 @@ A VSCode/Cursor extension providing an MCP Server for Confluence Wiki integratio
      - Type: Command
      - Command: [The path shown in Configuration page]
 
-3. **Using the Wiki MCP Server in Cursor**
+4. **Using the Wiki MCP Server in Cursor**
    - Open a chat with Claude or another AI model in Cursor
    - Switch to "Edit" or "Agent" mode for best results
    - In your prompt, include the Wiki URL and any specific requirements, for example:
