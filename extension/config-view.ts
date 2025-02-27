@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
 import { configManager } from './config-manager';
 
 export class ConfigView {
@@ -34,7 +33,7 @@ export class ConfigView {
 
     private updateContent() {
         const config = configManager.getConfig();
-        const serverPath = path.join(this._extensionUri.fsPath, 'dist', 'mcp-server', 'index.js');
+        const serverPath = 'http://localhost:' + config.port;
 
         this._view.webview.html = this.getWebviewContent(config, serverPath);
     }
@@ -110,6 +109,10 @@ export class ConfigView {
                         <label>Password:</label>
                         <input type="password" id="password" value="${config.password || ''}" />
                     </div>
+                    <div class="form-group">
+                        <label>Port:</label>
+                        <input type="number" id="port" value="${config.port || ''}" />
+                    </div>
                     <button onclick="saveConfig()">Save Configuration</button>
                 </div>
 
@@ -122,11 +125,11 @@ export class ConfigView {
                     </div>
                     <div class="form-group">
                         <label>Type:</label>
-                        <span>Command</span>
+                        <span>sse</span>
                     </div>  
                     <div class="form-group">
-                        <label>Command:</label>
-                        <span>node ${serverPath}</span>
+                        <label>Server URL:</label>
+                        <span>${serverPath}</span>
                     </div>
                 </div>
 
@@ -136,7 +139,8 @@ export class ConfigView {
                         const config = {
                             host: document.getElementById('host').value,
                             username: document.getElementById('username').value,
-                            password: document.getElementById('password').value
+                            password: document.getElementById('password').value,
+                            port: document.getElementById('port').value
                         };
                         vscode.postMessage({ command: 'saveConfig', config });
                     }

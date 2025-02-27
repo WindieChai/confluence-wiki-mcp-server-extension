@@ -12,17 +12,6 @@
         "${workspaceFolder}/dist/**/*.js"
       ],
       "preLaunchTask": "npm: watch"
-    },
-    {
-      "name": "MCP Server",
-      "type": "node",
-      "request": "launch",
-      "program": "${workspaceFolder}/dist/mcp-server/index.js",
-      "outFiles": [
-        "${workspaceFolder}/dist/**/*.js"
-      ],
-      "sourceMaps": true,
-      "preLaunchTask": "npm: compile"
     }
   ]
 } 

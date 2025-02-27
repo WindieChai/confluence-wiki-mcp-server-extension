@@ -1,11 +1,17 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { z } from "zod";
 import { ConfluenceClient } from "confluence.js";
-import { configManager, ConfluenceConfig } from "../extension/config-manager";
+import { configManager, ExtensionConfig } from "../extension/config-manager";
 import TurndownService from 'turndown';
+import { Request, Response } from "express";
 
+// MCP 服务器实例
+let mcpServer: McpServer;
+// Confluence 客户端实例
 let confluence: ConfluenceClient;
+// SSE 传输实例
+let transport: SSEServerTransport;
 
 // 创建 turndown 实例，配置转换选项
 const turndownService = new TurndownService({
@@ -31,7 +37,11 @@ turndownService.addRule('confluenceMetadata', {
     }
 });
 
-function initializeConfluenceClient(config: ConfluenceConfig) {
+/**
+ * 初始化 Confluence 客户端
+ * @param config 扩展配置
+ */
+function initializeConfluenceClient(config: ExtensionConfig) {
     try {
         confluence = new ConfluenceClient({
             host: config.host,
@@ -55,9 +65,9 @@ configManager.on('configChanged', (config) => {
     initializeConfluenceClient(config);
 });
 
-// 初始化时使用当前配置
-initializeConfluenceClient(configManager.getConfig());
-
+/**
+ * 获取 Wiki 内容的工具函数
+ */
 async function getWikiContent({ url }: { url: string }) {
     try {
         const urlParams = new URL(url).searchParams;
@@ -94,36 +104,76 @@ async function getWikiContent({ url }: { url: string }) {
         return {
             content: [{
                 type: "text" as const,
-                text: `Failed to retrieve page content: ${error instanceof Error ? error.message : "Unknown error"}`
+                text: `Failed to retrieve page content: ${error instanceof Error ? error.message : "Unknown error"}, Please check the URL and Extension Configuration.`
             }],
         };
     }
 }
 
-// 创建server实例
-const server = new McpServer({
-    name: "wiki",
-    version: "1.0.0"
-});
+/**
+ * 初始化 MCP 服务器
+ */
+export function initializeMcpServer() {
+    // 创建 MCP 服务器实例
+    mcpServer = new McpServer({
+        name: "wiki",
+        version: "1.1.0"
+    });
 
-// 注册get-page工具
-server.tool(
-    "get-wiki-content",
-    "Get Content of Confluence Wiki Page by URL",
-    {
-        url: z.string().describe("Wiki Page URL"),
-    },
-    getWikiContent
-);
+    // 注册 get-wiki-content 工具
+    mcpServer.tool(
+        "get-wiki-content",
+        "Get Content of Confluence Wiki Page by URL",
+        {
+            url: z.string().describe("Wiki Page URL"),
+        },
+        getWikiContent
+    );
 
-// 启动服务器
-async function main() {
-    const transport = new StdioServerTransport();
-    await server.connect(transport);
-    console.error("Wiki MCP Server running on stdio");
+    // 初始化时使用当前配置
+    initializeConfluenceClient(configManager.getConfig());
 }
 
-main().catch((error) => {
-    console.error("Fatal error in main():", error);
-    process.exit(1);
-});
+/**
+ * 处理 SSE 连接
+ * @param res Express 响应对象
+ */
+export async function handleSseConnection(res: Response) {
+    transport = new SSEServerTransport("/messages", res);
+    await mcpServer.connect(transport);
+    console.log("Wiki MCP Server connected via SSE");
+}
+
+/**
+ * 处理消息请求
+ * @param req Express 请求对象
+ * @param res Express 响应对象
+ */
+export async function handleMessageRequest(req: Request, res: Response) {
+    if (transport) {
+        await transport.handlePostMessage(req, res);
+    } else {
+        res.status(400).send("No active transport connection");
+    }
+}
+
+/**
+ * 关闭 MCP 服务器和 SSE 传输连接
+ */
+export async function closeMcpServer(): Promise<void> {
+    try {
+        // 关闭 SSE 传输连接
+        if (transport) {
+            await transport.close();
+            console.log("SSE transport closed");
+        }
+        
+        // 关闭 MCP 服务器
+        if (mcpServer) {
+            await mcpServer.close();
+            console.log("MCP server closed");
+        }
+    } catch (error) {
+        console.error("Error closing MCP server:", error);
+    }
+} 

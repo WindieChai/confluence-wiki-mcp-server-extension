@@ -1,93 +1,50 @@
-import * as fs from 'fs';
-import * as path from 'path';
 import { EventEmitter } from 'events';
-import { EncryptionManager, CONFIG_PATH } from './encryption-manager';
+import { EncryptionManager } from './encryption-manager';
 
 // 接口定义
-export interface ConfluenceConfig {
+export interface ExtensionConfig {
     host: string;
     username: string;
     password: string;
+    port: number;
 }
 
 // 配置管理器类
 class ConfigManager extends EventEmitter {
     private static instance: ConfigManager;
-    private config: ConfluenceConfig;
-    private watcher: fs.FSWatcher | null = null;
-    private initialized: boolean = false;
+    private config: ExtensionConfig;
 
     private constructor() {
         super();
         this.config = {
             host: '',
             username: '',
-            password: ''
+            password: '',
+            port: 1984
         };
 
         EncryptionManager.ensureConfigExists();
         this.loadConfigFile();
-        this.startWatchingConfig();
     }
 
     private loadConfigFile(): void {
-        const defaultConfig: ConfluenceConfig = {
-            host: '',
-            username: '',
-            password: ''
-        };
-        
-        this.config = EncryptionManager.readConfigFile<ConfluenceConfig>(defaultConfig);
+        this.config = EncryptionManager.readConfigFile<ExtensionConfig>(this.config);
     }
 
-    private startWatchingConfig(): void {
-        try {
-            // 如果已经在监控，先停止
-            if (this.watcher) {
-                this.watcher.close();
-                this.watcher = null;
-            }
-
-            // 确保配置文件存在
-            EncryptionManager.ensureConfigExists();
-
-            // 开始监控
-            this.watcher = fs.watch(CONFIG_PATH, (eventType) => {
-                if (eventType === 'change') {
-                    this.loadConfigFile();
-                    this.emit('configChanged', this.config);
-                }
-            });
-
-            this.watcher.on('error', (error) => {
-                console.error('Watch error:', error);
-                // 出错时关闭当前 watcher
-                if (this.watcher) {
-                    this.watcher.close();
-                    this.watcher = null;
-                }
-                // 延迟重试
-                setTimeout(() => this.startWatchingConfig(), 5000);
-            });
-
-        } catch (error) {
-            console.error('Error setting up file watcher:', error);
-            // 出错时延迟重试
-            setTimeout(() => this.startWatchingConfig(), 5000);
-        }
-    }
-
-    public getConfig(): ConfluenceConfig {
+    public getConfig(): ExtensionConfig {
         return { ...this.config };
     }
 
-    public async setConfig(newConfig: Partial<ConfluenceConfig>): Promise<void> {
+    public async setConfig(newConfig: Partial<ExtensionConfig>): Promise<void> {
         this.config = {
             ...this.config,
             ...newConfig
         };
+        
+        // 保存配置到文件
         EncryptionManager.writeConfigFile(this.config);
-        // 写入配置后触发事件
+        
+        // 直接触发配置变更事件
         this.emit('configChanged', this.config);
     }
 

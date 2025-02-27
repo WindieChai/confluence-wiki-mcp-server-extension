@@ -2,8 +2,8 @@ import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 
-export const CONFIG_PATH = path.join(__dirname, '..', 'config.enc');
-const EMPTY_CONFIG_PATH = path.join(__dirname, '..', 'empty-config.enc');
+const CONFIG_PATH = path.join(__dirname, '../../..', 'confluence-wiki-mcp-server-extension.config.enc');
+const EMPTY_CONFIG_PATH = path.join(__dirname, '..', 'confluence-wiki-mcp-server-extension.config.default.enc');
 const ENCRYPTION_KEY = 'confluencewikimcpserverextension';
 const IV_LENGTH = 16;
 
