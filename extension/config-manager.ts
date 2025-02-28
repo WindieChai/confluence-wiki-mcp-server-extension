@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events';
 import { EncryptionManager } from './encryption-manager';
+import * as output from './output';
 
 // 接口定义
 export interface ExtensionConfig {
@@ -23,12 +24,16 @@ class ConfigManager extends EventEmitter {
             port: 1984
         };
 
+        output.debug('Initializing ConfigManager');
         EncryptionManager.ensureConfigExists();
         this.loadConfigFile();
+        output.debug('ConfigManager initialized');
     }
 
     private loadConfigFile(): void {
+        output.debug('Loading configuration file');
         this.config = EncryptionManager.readConfigFile<ExtensionConfig>(this.config);
+        output.debug('Configuration file loaded');
     }
 
     public getConfig(): ExtensionConfig {
@@ -36,15 +41,22 @@ class ConfigManager extends EventEmitter {
     }
 
     public async setConfig(newConfig: Partial<ExtensionConfig>): Promise<void> {
+        output.debug('Setting new configuration');
         this.config = {
             ...this.config,
             ...newConfig
         };
         
         // 保存配置到文件
-        EncryptionManager.writeConfigFile(this.config);
+        const success = EncryptionManager.writeConfigFile(this.config);
+        if (success) {
+            output.info('Configuration saved successfully');
+        } else {
+            output.warn('Failed to save configuration');
+        }
         
         // 直接触发配置变更事件
+        output.debug('Emitting configChanged event');
         this.emit('configChanged', this.config);
     }
 

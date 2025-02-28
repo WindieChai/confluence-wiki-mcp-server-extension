@@ -1,6 +1,7 @@
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as output from './output';
 
 const CONFIG_PATH = path.join(__dirname, '../../..', 'confluence-wiki-mcp-server-extension.config.enc');
 const EMPTY_CONFIG_PATH = path.join(__dirname, '..', 'confluence-wiki-mcp-server-extension.config.default.enc');
@@ -72,7 +73,7 @@ export class EncryptionManager {
                 return JSON.parse(decryptedData);
             }
         } catch (error) {
-            console.error(`Error reading encrypted file ${filePath}:`, error);
+            output.error(`Error reading encrypted file ${filePath}`, error);
         }
         
         return defaultValue;
@@ -90,7 +91,7 @@ export class EncryptionManager {
             fs.writeFileSync(filePath, encryptedData);
             return true;
         } catch (error) {
-            console.error(`Error writing encrypted file ${filePath}:`, error);
+            output.error(`Error writing encrypted file ${filePath}`, error);
             return false;
         }
     }
@@ -102,20 +103,20 @@ export class EncryptionManager {
     public static ensureConfigExists(): boolean {
         try {
             if (!fs.existsSync(CONFIG_PATH)) {
-                console.log(`Config file does not exist at ${CONFIG_PATH}, creating from template`);
+                output.info(`Config file does not exist at ${CONFIG_PATH}, creating from template`);
                 
                 if (fs.existsSync(EMPTY_CONFIG_PATH)) {
                     fs.copyFileSync(EMPTY_CONFIG_PATH, CONFIG_PATH);
-                    console.log(`Created config file from template: ${CONFIG_PATH}`);
+                    output.info(`Created config file from template: ${CONFIG_PATH}`);
                     return true;
                 } else {
-                    console.error(`Empty config template not found at: ${EMPTY_CONFIG_PATH}`);
+                    output.error(`Empty config template not found at: ${EMPTY_CONFIG_PATH}`);
                     return false;
                 }
             }
             return true;
         } catch (error) {
-            console.error(`Error ensuring config file exists:`, error);
+            output.error(`Error ensuring config file exists`, error);
             return false;
         }
     }
@@ -129,20 +130,20 @@ export class EncryptionManager {
     static ensureFileExists(targetPath: string, templatePath: string): boolean {
         try {
             if (!fs.existsSync(targetPath)) {
-                console.log(`File does not exist at ${targetPath}, creating from template`);
+                output.info(`File does not exist at ${targetPath}, creating from template`);
                 
                 if (fs.existsSync(templatePath)) {
                     fs.copyFileSync(templatePath, targetPath);
-                    console.log(`Created file from template: ${targetPath}`);
+                    output.info(`Created file from template: ${targetPath}`);
                     return true;
                 } else {
-                    console.error(`Template file not found at: ${templatePath}`);
+                    output.error(`Template file not found at: ${templatePath}`);
                     return false;
                 }
             }
             return true;
         } catch (error) {
-            console.error(`Error ensuring file exists at ${targetPath}:`, error);
+            output.error(`Error ensuring file exists at ${targetPath}`, error);
             return false;
         }
     }

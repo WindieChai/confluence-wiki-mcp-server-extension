@@ -1,17 +1,21 @@
 import * as vscode from 'vscode';
 import { configManager } from './config-manager';
+import * as output from './output';
 
 export class ConfigView {
     private readonly _view: vscode.WebviewPanel;
     private readonly _extensionUri: vscode.Uri;
 
     constructor(context: vscode.ExtensionContext) {
+        output.debug('Creating ConfigView');
         this._extensionUri = context.extensionUri;
         this._view = this.createWebviewPanel(context);
         this.updateContent();
+        output.debug('ConfigView created');
     }
 
     private createWebviewPanel(context: vscode.ExtensionContext): vscode.WebviewPanel {
+        output.debug('Creating webview panel');
         const panel = vscode.window.createWebviewPanel(
             'confluenceWikiConfig',
             'Confluence Wiki Configuration',
@@ -32,8 +36,9 @@ export class ConfigView {
     }
 
     private updateContent() {
+        output.debug('Updating webview content');
         const config = configManager.getConfig();
-        const serverPath = 'http://localhost:' + config.port;
+        const serverPath = 'http://localhost:' + config.port + '/sse';
 
         this._view.webview.html = this.getWebviewContent(config, serverPath);
     }
@@ -151,12 +156,21 @@ export class ConfigView {
     }
 
     private async handleMessage(message: any) {
+        output.debug(`Received message: ${message.command}`);
         switch (message.command) {
             case 'saveConfig':
-                await configManager.setConfig(message.config);
-                vscode.window.showInformationMessage('Configuration saved successfully');
-                this.updateContent(); // 刷新显示
+                try {
+                    await configManager.setConfig(message.config);
+                    vscode.window.showInformationMessage('Configuration saved successfully');
+                    output.info('Configuration saved via UI');
+                    this.updateContent(); // 刷新显示
+                } catch (error) {
+                    output.error('Error saving configuration', error);
+                    vscode.window.showErrorMessage('Failed to save configuration');
+                }
                 break;
+            default:
+                output.warn(`Unknown command: ${message.command}`);
         }
     }
 } 

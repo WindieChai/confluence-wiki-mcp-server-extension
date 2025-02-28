@@ -5,6 +5,7 @@ import { ConfluenceClient } from "confluence.js";
 import { configManager, ExtensionConfig } from "../extension/config-manager";
 import TurndownService from 'turndown';
 import { Request, Response } from "express";
+import * as output from "../extension/output";
 
 // MCP 服务器实例
 let mcpServer: McpServer;
@@ -27,8 +28,11 @@ turndownService.addRule('confluenceMetadata', {
     filter: ['div', 'span'],
     replacement: function(content, node) {
         // 移除一些 Confluence 特有的元数据 div
-        if (node.classList && (
+        // @ts-ignore: 使用类型断言处理 DOM 节点
+        if (node && node.classList && (
+            // @ts-ignore: 使用类型断言处理 DOM 节点
             node.classList.contains('confluence-metadata') ||
+            // @ts-ignore: 使用类型断言处理 DOM 节点
             node.classList.contains('confluence-information-macro')
         )) {
             return '';
@@ -53,15 +57,15 @@ function initializeConfluenceClient(config: ExtensionConfig) {
                 }
             },
         });
-        console.log('Confluence client initialized with host:', config.host);
+        output.info(`Confluence client initialized with host: ${config.host}`);
     } catch (error) {
-        console.error('Error initializing Confluence client:', error);
+        output.error('Error initializing Confluence client', error);
     }
 }
 
 // 监听配置变更事件
 configManager.on('configChanged', (config) => {
-    console.log('Config changed, reinitializing Confluence client');
+    output.info('Config changed, reinitializing Confluence client');
     initializeConfluenceClient(config);
 });
 
@@ -70,11 +74,18 @@ configManager.on('configChanged', (config) => {
  */
 async function getWikiContent({ url }: { url: string }) {
     try {
+        if (!confluence) {
+            throw new Error("Confluence client is not initialized");
+        }
+        
         const urlParams = new URL(url).searchParams;
         const pageId = urlParams.get('pageId');
         if (!pageId) {
             throw new Error('Invalid URL: pageId parameter is missing');
         }
+        
+        output.debug(`Fetching page with ID: ${pageId}`);
+        
         const response = await confluence.content.getContentById({
             id: pageId,
             expand: ["body.view"],
@@ -82,6 +93,7 @@ async function getWikiContent({ url }: { url: string }) {
         });
 
         if (!response || !response.body || !response.body.view || !response.body.view.value) {
+            output.warn(`Failed to retrieve content for page ID: ${pageId}`);
             return {
                 content: [{
                     type: "text" as const,
@@ -91,6 +103,7 @@ async function getWikiContent({ url }: { url: string }) {
         }
 
         // 将HTML转换为Markdown
+        output.debug(`Converting HTML to Markdown for page ID: ${pageId}`);
         const markdown = turndownService.turndown(response.body.view.value);
 
         return {
@@ -100,7 +113,7 @@ async function getWikiContent({ url }: { url: string }) {
             }],
         };
     } catch (error) {
-        console.error("Error fetching page:", error);
+        output.error("Error fetching page", error);
         return {
             content: [{
                 type: "text" as const,
@@ -114,6 +127,8 @@ async function getWikiContent({ url }: { url: string }) {
  * 初始化 MCP 服务器
  */
 export function initializeMcpServer() {
+    output.info("Initializing MCP Server...");
+    
     // 创建 MCP 服务器实例
     mcpServer = new McpServer({
         name: "wiki",
@@ -132,6 +147,8 @@ export function initializeMcpServer() {
 
     // 初始化时使用当前配置
     initializeConfluenceClient(configManager.getConfig());
+    
+    output.info("MCP Server initialized successfully");
 }
 
 /**
@@ -139,9 +156,15 @@ export function initializeMcpServer() {
  * @param res Express 响应对象
  */
 export async function handleSseConnection(res: Response) {
+    if (!mcpServer) {
+        output.error("MCP Server not initialized");
+        res.status(500).send("MCP Server not initialized");
+        return;
+    }
+    
     transport = new SSEServerTransport("/messages", res);
     await mcpServer.connect(transport);
-    console.log("Wiki MCP Server connected via SSE");
+    output.info("Wiki MCP Server connected via SSE");
 }
 
 /**
@@ -153,6 +176,7 @@ export async function handleMessageRequest(req: Request, res: Response) {
     if (transport) {
         await transport.handlePostMessage(req, res);
     } else {
+        output.warn("No active transport connection");
         res.status(400).send("No active transport connection");
     }
 }
@@ -165,15 +189,15 @@ export async function closeMcpServer(): Promise<void> {
         // 关闭 SSE 传输连接
         if (transport) {
             await transport.close();
-            console.log("SSE transport closed");
+            output.info("SSE transport closed");
         }
         
         // 关闭 MCP 服务器
         if (mcpServer) {
             await mcpServer.close();
-            console.log("MCP server closed");
+            output.info("MCP server closed");
         }
     } catch (error) {
-        console.error("Error closing MCP server:", error);
+        output.error("Error closing MCP server", error);
     }
 } 
