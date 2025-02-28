@@ -9,9 +9,16 @@
         "--extensionDevelopmentPath=${workspaceFolder}"
       ],
       "outFiles": [
-        "${workspaceFolder}/dist/**/*.js"
+        "${workspaceFolder}/dist/extension.js"
       ],
-      "preLaunchTask": "npm: watch"
+      "preLaunchTask": "npm: watch",
+      "sourceMaps": true,
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/dist/*.js"
+      ],
+      "env": {
+        "NODE_ENV": "development"
+      }
     }
   ]
 } 

@@ -1,7 +1,7 @@
 {
   "name": "confluence-wiki-mcp-server-extension",
   "displayName": "Confluence Wiki MCP Server",
-  "version": "1.1.2",
+  "version": "1.1.3",
   "publisher": "WindStyle",
   "description": "A VSCode/Cursor extension providing an MCP Server for Confluence Wiki integration",
   "author": {
@@ -26,14 +26,14 @@
     "color": "#001f3f",
     "theme": "dark"
   },
-  "main": "./dist/extension/extension.js",
+  "main": "./dist/extension.js",
   "scripts": {
     "copy": "copyfiles -f extension/confluence-wiki-mcp-server-extension.config.default.enc dist/",
-    "compile": "npm run copy && tsc -p ./",
-    "watch": "npm run copy && tsc -watch -p ./",
-    "prepackage": "npm run compile",
+    "compile": "npm run copy && node build.js",
+    "watch": "npm run copy && node build.js --watch",
+    "prepackage": "npm run compile --production",
     "package": "vsce package",
-    "prepublish": "npm run compile",
+    "prepublish": "npm run compile --production",
     "publish": "vsce publish"
   },
   "dependencies": {
@@ -50,6 +50,7 @@
     "@types/vscode": "^1.85.0",
     "@vscode/vsce": "^2.24.0",
     "copyfiles": "^2.4.1",
+    "esbuild": "^0.25.0",
     "typescript": "^5.3.3"
   },
   "engines": {
@@ -88,8 +89,8 @@
   "files": [
     "dist/**/*.js",
     "dist/confluence-wiki-mcp-server-extension.config.default.enc",
-    "node_modules/**",
     "resources/**",
-    "README.md"
+    "README.md",
+    "LICENSE.md"
   ]
 }

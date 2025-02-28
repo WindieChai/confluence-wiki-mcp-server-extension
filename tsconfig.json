@@ -5,16 +5,20 @@
     "lib": ["ES2020"],
     "sourceMap": true,
     "rootDir": ".",
-    "outDir": "./dist",
     "strict": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "moduleResolution": "node",
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node"
+    "outDir": "dist"
   },
   "include": [
-    "mcp-server/**/*",
-    "extension/**/*"
+    "extension/**/*",
+    "mcp-server/**/*"
   ],
   "exclude": [
     "node_modules",
