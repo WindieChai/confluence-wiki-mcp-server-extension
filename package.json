@@ -78,7 +78,7 @@
     ]
   },
   "files": [
-    "dist/**/*.js",
+    "dist/*.js",
     "dist/confluence-wiki-mcp-server-extension.config.default.enc",
     "resources/**",
     "README.md",
