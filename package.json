@@ -60,15 +60,6 @@
     "onStartupFinished"
   ],
   "contributes": {
-    "viewsContainers": {
-      "activitybar": [
-        {
-          "id": "confluence-wiki-mcp-server-extension",
-          "title": "Confluence Wiki MCP Server",
-          "icon": "resources/icon.svg"
-        }
-      ]
-    },
     "views": {
       "confluence-wiki-mcp-server-extension": [
         {

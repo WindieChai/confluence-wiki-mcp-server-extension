@@ -4,11 +4,9 @@ import * as output from './output';
 
 export class ConfigView {
     private readonly _view: vscode.WebviewPanel;
-    private readonly _extensionUri: vscode.Uri;
 
     constructor(context: vscode.ExtensionContext) {
         output.debug('Creating ConfigView');
-        this._extensionUri = context.extensionUri;
         this._view = this.createWebviewPanel(context);
         this.updateContent();
         output.debug('ConfigView created');
